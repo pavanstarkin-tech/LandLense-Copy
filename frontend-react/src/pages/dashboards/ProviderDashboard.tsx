@@ -151,27 +151,63 @@ export const ProviderDashboard = () => {
     navigate('/auth/login');
   };
 
-  useEffect(() => { loadData(); loadVisits(); loadNotifications(); }, []);
+  useEffect(() => { loadData(); loadNotifications(); }, []);
 
   const loadData = async () => {
     try {
       const properties = await propertyService.getProperties();
       setAllProperties(properties);
       const userId = currentUser?.id || localStorage.getItem('user_id');
-      let filtered = userId ? properties.filter(p => p.providerId === userId || p.provider?.id === userId) : properties;
+      let filtered = userId ? properties.filter(p => p.providerId === userId || p.provider?.id === userId || (currentUser?.email && p.provider?.email === currentUser.email)) : properties;
       filtered = filtered.filter(p => 
         !p.threeSixtyImageUrl?.toLowerCase().includes('google.com') && 
         !p.threeSixtyImageUrl?.toLowerCase().includes('google.co.in') &&
         !isDirectImage(p.threeSixtyImageUrl)
       );
       setMyProperties(filtered);
+      // Strictly load inquiries for this seller's properties only
+      loadVisits(filtered);
     } catch {
       setMyProperties([]);
       setAllProperties([]);
+      setMyVisits([]);
     }
   };
 
-  const loadVisits = async () => { try { setMyVisits(await propertyService.getVisits()); } catch {} };
+  const loadVisits = async (sellerProps?: Property[]) => {
+    try {
+      const propsToCheck = sellerProps !== undefined ? sellerProps : myProperties;
+      const userId = currentUser?.id || localStorage.getItem('user_id');
+
+      // CONDITION: If this seller has not added any properties, they must receive 0 inquiries!
+      if (!propsToCheck || propsToCheck.length === 0) {
+        setMyVisits([]);
+        return;
+      }
+
+      const allVisits = await propertyService.getVisits(userId || undefined);
+      const myPropertyIds = new Set(propsToCheck.map(p => p.id));
+
+      // Strictly push inquiries to the accurate property owner/seller only:
+      const filtered = allVisits.filter(v => {
+        const propId = v.propertyId || v.property?.id;
+        if (propId && myPropertyIds.has(propId)) {
+          return true;
+        }
+        if (userId && (v.property?.providerId === userId || v.property?.provider?.id === userId)) {
+          return true;
+        }
+        if (currentUser?.email && v.property?.provider?.email === currentUser.email) {
+          return true;
+        }
+        return false;
+      });
+
+      setMyVisits(filtered);
+    } catch {
+      setMyVisits([]);
+    }
+  };
 
   const loadNotifications = async () => { try { setNotifications(await propertyService.getNotifications()); } catch {} };
 
@@ -1008,13 +1044,15 @@ export const ProviderDashboard = () => {
           </div>
         </div>
 
-      {/* ─── VISITS TAB ─── */}
+      {/* ─── VISITS & INQUIRIES TAB ─── */}
       <div className={`${activeTab === 'visits' ? 'block' : 'hidden'} space-y-5`}>
           <div>
-            <h2 className="text-gray-900 font-bold text-xl">Visits & Tours</h2>
-            <p className="text-gray-500 text-sm mt-0.5">Manage visit requests from potential buyers</p>
+            <h2 className="text-gray-900 font-bold text-xl">Visits & Inquiries</h2>
+            <p className="text-gray-500 text-sm mt-0.5">Manage visit requests and buyer inquiries for your properties</p>
           </div>
-          {myVisits.length > 0 ? (
+          {myProperties.length === 0 ? (
+            <EmptyState icon={<Calendar className="w-8 h-8" />} title="No Inquiries" description="You have not added any properties yet. Buyer inquiries will only be routed to you once you list a property." />
+          ) : myVisits.length > 0 ? (
             <div className="space-y-3">
               {myVisits.map(v => (
                 <div key={v.id} className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -1040,7 +1078,7 @@ export const ProviderDashboard = () => {
               ))}
             </div>
           ) : (
-            <EmptyState icon={<Calendar className="w-8 h-8" />} title="No visits scheduled" description="Buyers can schedule visits from the property detail page." />
+            <EmptyState icon={<Calendar className="w-8 h-8" />} title="No inquiries scheduled" description="Buyers can schedule visits and send inquiries from your property listing pages." />
           )}
         </div>
 

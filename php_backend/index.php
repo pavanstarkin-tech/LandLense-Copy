@@ -41,9 +41,15 @@ if (str_starts_with($path, '/php_backend')) {
 }
 
 // =========================================================================
-// 1. HEALTH & ACTUATOR ENDPOINTS
+// 1. FRONTEND SPA ROOT & HEALTH ENDPOINTS
 // =========================================================================
-if ($path === '/' || $path === '/api/health' || $path === '/actuator/health') {
+if ($path === '/' && file_exists(__DIR__ . '/index.html')) {
+    header('Content-Type: text/html; charset=utf-8');
+    readfile(__DIR__ . '/index.html');
+    exit();
+}
+
+if ($path === '/' || $path === '/api' || $path === '/api/health' || $path === '/actuator/health') {
     $dbOk = (Database::getConnection() !== null);
     Response::json([
         'status' => 'UP',
@@ -113,15 +119,15 @@ if (preg_match('#^/api/properties/([^/]+)$#', $path, $matches) && $method === 'G
 // =========================================================================
 // 4. VERIFICATION & I3B ENDPOINTS
 // =========================================================================
-if ($path === '/api/verify/document' && $method === 'POST') {
+if (($path === '/api/verify/document' || $path === '/api/verification/verify') && $method === 'POST') {
     VerificationController::verifyDocument();
 }
 
-if ($path === '/api/verify/trigger-owner-verification' && $method === 'POST') {
+if (($path === '/api/verify/trigger-owner-verification' || $path === '/api/verification/owner-request') && $method === 'POST') {
     VerificationController::triggerOwnerVerification();
 }
 
-if ($path === '/api/verify/owner-action') {
+if ($path === '/api/verify/owner-action' || $path === '/api/verification/owner-response') {
     VerificationController::handleOwnerAction();
 }
 
@@ -135,6 +141,22 @@ if ($path === '/api/government-verify' || $path === '/api/verify/government') {
 
 if ($path === '/api/ai-verification' || $path === '/api/verify/ai') {
     VerificationController::aiVerification();
+}
+
+if (preg_match('#^/api/properties/([^/]+)/ai-verify$#', $path)) {
+    VerificationController::aiVerification();
+}
+
+if (preg_match('#^/api/properties/([^/]+)/ai-verification$#', $path)) {
+    VerificationController::aiVerification();
+}
+
+if (preg_match('#^/api/properties/([^/]+)/government-verify$#', $path)) {
+    VerificationController::governmentVerify();
+}
+
+if (preg_match('#^/api/properties/([^/]+)/timeline$#', $path)) {
+    VerificationController::getTimeline();
 }
 
 // =========================================================================

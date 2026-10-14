@@ -43,7 +43,8 @@ shutil.copy2(os.path.join(LOCAL_PHP, 'index.php'), os.path.join(PACKAGE_DIR, 'in
 print(" - Copied PHP Backend engine & controllers.")
 
 # 3. Create Production .htaccess (Unified SPA + PHP API Router)
-htaccess_content = """<IfModule mod_rewrite.c>
+htaccess_content = """DirectoryIndex index.html index.php
+<IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
 

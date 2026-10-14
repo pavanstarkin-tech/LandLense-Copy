@@ -5,14 +5,21 @@ ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 ssh.connect('193.203.185.110', port=65002, username='u833088220', password='Sanvith@27')
 
 htaccess_content = """DirectoryIndex index.html index.php
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
+
+<IfModule mod_headers.c>
+    # Disable Alt-Svc to prevent buggy Hostinger HTTP/3 stream truncation
+    Header always unset Alt-Svc
+    Header unset Alt-Svc
 
     # Enable CORS
     Header always set Access-Control-Allow-Origin "*"
     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD"
-    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, x-api-key, Accept, Origin, X-Requested-With"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, x-api-key, Accept, Origin, X-Requested-With"
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
 
     # Route /api/* and /actuator/* to PHP Backend
     RewriteCond %{REQUEST_URI} ^/api(/.*)?$ [NC,OR]

@@ -1,0 +1,83 @@
+
+LANDLENS – PROJECT REQUIREMENTS
+Simple Project & Feature Description for Developer
+1. Project Overview
+LandLens is a property document verification platform that helps a buyer check property documents and separately confirm whether the genuine/original owner has authorized those documents.
+The project has two separate verification stages: (1) Document Verification and (2) Original Owner Verification.
+2. Complete Project Flow
+1. Buyer searches for a property by entering the available property details.
+2. LandLens displays the associated seller/original-owner contact details.
+3. Buyer contacts the seller outside LandLens and receives the property documents. The method of sending the documents is outside the project.
+4. Buyer uploads the received documents to the LandLens AI Assistant and can also enter property details manually.
+5. LandLens reads and analyzes the uploaded documents and extracts important property information.
+6. The system compares information between the uploaded documents, buyer-entered details and available property/reference records.
+7. The system identifies mismatches, missing information and other potential risks.
+8. LandLens generates an easy-to-understand Verification Report explaining the results.
+9. The buyer can ask questions about the documents and report through the AI Assistant.
+10. The buyer can request Original Owner Verification.
+11. LandLens sends an email notification to the registered/original owner.
+12. The original owner can APPROVE or REJECT the request.
+13. If APPROVED, the confirmation is recorded and the buyer can proceed with the normal registration process at the registration office.
+14. If REJECTED, the suspicious seller account can be flagged/blocked and further legal or official action is outside LandLens.
+3. Property Search
+Buyer enters available property information.
+System searches for the property.
+System shows the available property details and associated seller/original-owner contact information.
+4. Document Verification
+Buyer uploads property documents.
+System reads the documents and extracts important details.
+Important details can include owner name, survey number, area, location, registration information and previous ownership information.
+System compares information across documents and available property/reference records.
+Potential discrepancies and missing information are identified.
+5. Verification Report
+The report should clearly show:
+Property details
+Owner information
+Matching/consistent information
+Potential discrepancies
+Missing information
+Risk indicators
+Simple explanation of why something was flagged
+6. AI Assistant / Chat
+Buyer can ask questions about uploaded documents.
+Buyer can ask why something was flagged.
+Buyer can ask for property details such as owner name or survey number.
+Buyer can ask what information is missing.
+Answers should be based on the uploaded documents and available property information.
+7. Original Owner Verification
+This is separate from the normal document verification report.
+Buyer clicks 'Request Original Owner Verification'.
+An email is sent to the registered/original owner.
+The owner is asked whether they provided or authorized the documents.
+Owner chooses APPROVE or REJECT.
+The response and verification status are recorded.
+8. Important Fake-Seller Scenario
+This scenario must be supported because it is a key part of the project.
+A fake seller may provide forged documents that contain exactly the same information as the available property records. In this situation, the normal document Verification Report may show that the information is consistent.
+The buyer can then request Original Owner Verification. If the genuine owner rejects the request because they did not provide or authorize the documents, the suspicious seller can be flagged/blocked.
+9. Two Verification Layers
+Verification
+Question
+Result
+Document Verification
+Do the documents and property information appear consistent?
+Verification Report
+Original Owner Verification
+Did the genuine owner provide/authorize the documents?
+Approved / Rejected
+10. Important Requirements
+Document verification and original-owner verification must remain separate.
+A matching document report must not automatically mean that the seller is genuine.
+The system should identify potential discrepancies rather than automatically declaring legal fraud.
+Original-owner approval is a confirmation of authorization, not a legal ownership decision.
+The buyer should be able to see the status of both verification stages.
+11. What LandLens Does Not Do
+It does not perform the actual legal property registration.
+It does not replace the registration office.
+It does not conduct police or court proceedings.
+It does not handle the actual transfer of documents between buyer and seller.
+It does not make a final legal determination of property ownership.
+12. Simple Overall Flow
+Buyer → Search Property → Get Seller/Owner Contact → Contact Seller → Receive Documents → Upload to LandLens → AI Analysis → Verification Report → AI Chat → Request Owner Verification → Email Owner → APPROVE / REJECT
+13. Final Requirement to Developer
+Please build LandLens according to the above workflow and features. The technical implementation and technology choices can be decided by the developer. The important requirement is that the final project should provide the complete buyer workflow, document verification, explainable report, AI chat and separate original-owner confirmation process described above.

@@ -9,32 +9,7 @@ const getStoredVisits = (): Models.PropertyVisit[] => {
     if (raw) {
       return JSON.parse(raw);
     }
-    // Initialize with active scheduled visit for Vineyard Estate
-    const initialVisit: Models.PropertyVisit = {
-      id: 'visit-vineyard-estate-default',
-      propertyId: 'p-vineyard-estate',
-      property: {
-        id: 'p-vineyard-estate',
-        title: 'Vineyard Estate',
-        price: 3400000,
-        area: 2.5,
-        village: 'Rampally',
-        district: 'Medchal-Malkajgiri',
-        status: 'APPROVED',
-        surveyNumber: '342/A',
-        category: 'AGRICULTURAL',
-        provider: {
-          id: 'prov-01',
-          email: 'seller@gmail.com',
-          phoneNumber: '+91 98765 43210'
-        } as any
-      } as any,
-      visitDate: '2026-09-25',
-      visitTime: '10:00',
-      status: 'SCHEDULED' as any
-    };
-    saveStoredVisits([initialVisit]);
-    return [initialVisit];
+    return [];
   } catch {
     return [];
   }
@@ -218,10 +193,12 @@ export const propertyService = {
     return newVisit;
   },
 
-  getVisits: async (): Promise<Models.PropertyVisit[]> => {
+  getVisits: async (providerId?: string): Promise<Models.PropertyVisit[]> => {
     const localVisits = getStoredVisits();
     try {
-      const response = await api.get<Models.PropertyVisit[]>('/api/properties/visits');
+      const response = await api.get<Models.PropertyVisit[]>('/api/properties/visits', {
+        params: providerId ? { providerId } : undefined
+      });
       const serverVisits = Array.isArray(response.data) ? response.data : [];
 
       if (serverVisits.length > 0) {
@@ -239,10 +216,18 @@ export const propertyService = {
         }
         const merged = Array.from(mergedMap.values());
         saveStoredVisits(merged);
+
+        if (providerId) {
+          return merged.filter(v => v.property?.providerId === providerId || v.property?.provider?.id === providerId);
+        }
         return merged;
       }
     } catch (e) {
       console.warn("Backend getVisits failed, returning locally stored visits:", e);
+    }
+
+    if (providerId) {
+      return localVisits.filter(v => v.property?.providerId === providerId || v.property?.provider?.id === providerId);
     }
     return localVisits;
   },

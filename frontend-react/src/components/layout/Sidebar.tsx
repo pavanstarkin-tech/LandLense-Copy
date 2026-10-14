@@ -180,7 +180,7 @@ export const buyerNavItems = (unreadCount: number): NavItem[] => [
 export const providerNavItems = (pendingVisits: number, unreadCount: number): NavItem[] => [
   { id: 'listings', label: 'My Listings', icon: Home },
   { id: 'add', label: 'Add Property', icon: Plus },
-  { id: 'visits', label: 'Visits & Tours', icon: Calendar, badge: pendingVisits },
+  { id: 'visits', label: 'Visits & Inquiries', icon: Calendar, badge: pendingVisits },
   { id: 'notifications', label: 'Notifications', icon: Bell, badge: unreadCount },
 ];
 
