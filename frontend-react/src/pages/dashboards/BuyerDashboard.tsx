@@ -17,13 +17,13 @@ import { CitizenAiAssistantModal } from '../../components/shared/CitizenAiAssist
 import { DocumentVerificationHub } from '../../components/shared/DocumentVerificationHub';
 import { LandTransferHub } from '../../components/shared/LandTransferHub';
 import { LandSellerHub } from '../../components/shared/LandSellerHub';
-import type { Property, PropertyVisit, AiConversation, AiMessage, Notification, PropertyImage, PropertyVideo, PropertyDocument, AiVerification } from '../../models/property.models';
+import type { Property, PropertyVisit, LandTransfer, AiConversation, AiMessage, Notification, PropertyImage, PropertyVideo, PropertyDocument, AiVerification } from '../../models/property.models';
 import {
   Search, Calendar, MessageSquare, Bell, Map as MapIcon,
   Heart, ExternalLink, Clock, CheckCircle, Send, Plus,
   Filter, User, Settings, LogOut, ChevronRight, Home, Bookmark, 
   RefreshCw, X, Shield, Play, Video, FileText, ArrowLeft, Star, MapPin, Menu,
-  Compass, Phone, Mail, Briefcase, Loader2, FileCheck, Sparkles, Award, ShieldCheck
+  Compass, Phone, Mail, Briefcase, Loader2, FileCheck, Sparkles, Award, ShieldCheck, XCircle
 } from 'lucide-react';
 import logo from '../../assets/logo.png';
 import logoText from '../../assets/logo-text.png';
@@ -298,6 +298,9 @@ export const BuyerDashboard = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [savedProperties, setSavedProperties] = useState<Property[]>([]);
   const [visits, setVisits] = useState<PropertyVisit[]>([]);
+  const [transfers, setTransfers] = useState<LandTransfer[]>([]);
+  const [transferRequestingId, setTransferRequestingId] = useState<string | null>(null);
+  const [transferFeedback, setTransferFeedback] = useState<{ [propId: string]: { type: 'success' | 'error'; text: string } }>({});
   const [conversations, setConversations] = useState<AiConversation[]>([]);
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -408,7 +411,7 @@ export const BuyerDashboard = () => {
         (error) => console.error("Error getting location", error)
       );
     }
-    loadData(filters); loadBookmarks(); loadVisits(); loadNotifications();
+    loadData(filters); loadBookmarks(); loadVisits(); loadNotifications(); loadTransfers();
   }, []);
 
   const loadData = async (currentFilters: any) => {
@@ -456,6 +459,64 @@ export const BuyerDashboard = () => {
     setVisitsLoading(true);
     try { setVisits(await propertyService.getVisits()); } catch {}
     finally { setVisitsLoading(false); }
+  };
+
+  const loadTransfers = async () => {
+    try {
+      const data = await propertyService.getLandTransfers();
+      setTransfers(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.warn("Failed to load transfers:", e);
+    }
+  };
+
+  const handleSimulateAcceptVisit = async (visitId: string) => {
+    try {
+      await propertyService.updateVisitStatus(visitId, 'CONFIRMED');
+      await loadVisits();
+    } catch (e) {
+      console.warn("Failed to confirm visit:", e);
+    }
+  };
+
+  const handleRequestLandTransferFromVisit = async (property: any) => {
+    if (!property || !property.id) return;
+    const propId = property.id;
+    setTransferRequestingId(propId);
+    try {
+      const buyerName = `${currentUser?.firstName || 'Citizen'} ${currentUser?.lastName || 'Buyer'}`.trim();
+      const buyerEmail = currentUser?.email || 'buyer@landlens.in';
+      const ownerEmail = property.provider?.email || property.ownerEmail || 'landlens@acheva.in';
+
+      const res = await propertyService.requestLandTransfer({
+        propertyId: propId,
+        buyerId: currentUser?.id,
+        buyerName,
+        buyerEmail,
+        ownerEmail,
+        transferAmount: property.price || 5000000,
+        remarks: 'Land buyer transfer request from verified site visit'
+      });
+
+      setTransferFeedback(prev => ({
+        ...prev,
+        [propId]: {
+          type: 'success',
+          text: `✓ Land transfer confirmation mail successfully dispatched via Hostinger SMTP to actual landowner (${res.ownerEmail || ownerEmail})! Awaiting their approval.`
+        }
+      }));
+      await loadTransfers();
+    } catch (err: any) {
+      setTransferFeedback(prev => ({
+        ...prev,
+        [propId]: {
+          type: 'error',
+          text: `Failed to request transfer: ${err?.response?.data?.error || err?.message || 'Check Hostinger SMTP connection'}`
+        }
+      }));
+    } finally {
+      setTransferRequestingId(null);
+    }
   };
 
   const loadNotifications = async () => {
@@ -1036,88 +1097,241 @@ export const BuyerDashboard = () => {
 
           {/* ── SCHEDULE TAB (Visits) ── */}
           <div className={viewTab === 'schedule' ? 'block p-4 space-y-4' : 'hidden'}>
-            <h1 className="text-xl font-bold text-gray-900 mb-2">My Schedule</h1>
-              {visitsLoading ? (
-                <div className="flex flex-col gap-4">
-                  {[0, 1, 2, 3].map(i => <VisitSkeletonCard key={i} />)}
-                </div>
-              ) : visits.length > 0 ? (
-                <div className="flex flex-col gap-4">
-                  {visits.map(v => {
-                    const isApproved = v.status === 'CONFIRMED';
-                    const isDeclined = v.status === 'CANCELLED' || v.status === 'REJECTED';
-
-                    // Parse visit date safely without timezone shift
-                    const dateParts = (v.visitDate || '').split('-');
-                    const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-                    let displayMonth = 'VISIT';
-                    let displayDay: string | number = '--';
-                    if (dateParts.length === 3) {
-                      const mIdx = parseInt(dateParts[1], 10) - 1;
-                      displayMonth = monthNames[mIdx] || 'VISIT';
-                      displayDay = parseInt(dateParts[2], 10) || '--';
-                    } else if (v.visitDate) {
-                      const d = new Date(v.visitDate);
-                      if (!isNaN(d.getTime())) {
-                        displayMonth = d.toLocaleString('default', { month: 'short' }).toUpperCase();
-                        displayDay = d.getDate();
-                      }
-                    }
-
-                    const matchedProp = v.property?.title ? v.property : properties.find(p => p.id === (v as any).propertyId || p.id === v.property?.id) || v.property;
-                    const propTitle = matchedProp?.title || (v as any).propertyTitle || 'Vineyard Estate';
-
-                    return (
-                      <div key={v.id} className={`shadow-sm border rounded-2xl p-4 flex gap-3.5 items-center transition-all ${
-                        isApproved ? 'bg-emerald-50/40 border-emerald-200' : isDeclined ? 'bg-rose-50/40 border-rose-200' : 'bg-white border-gray-200'
-                      }`}>
-                        <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex flex-col items-center justify-center shrink-0">
-                          <span className="text-[10px] text-blue-600 font-bold uppercase">{displayMonth}</span>
-                          <span className="text-sm text-gray-900 font-bold">{displayDay}</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-bold text-gray-900 truncate">{propTitle}</h3>
-                          <p className="text-xs text-gray-500 flex items-center gap-1 mt-1"><Clock className="w-3 h-3 text-gray-400"/> {v.visitTime || '10:00'}</p>
-                        </div>
-
-                        {isApproved ? (
-                          <div className="flex items-center gap-2">
-                            <a 
-                              href={`tel:${matchedProp?.provider?.phoneNumber || '+91 98765 43210'}`} 
-                              title="Call Seller"
-                              className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-500 transition-colors shadow-sm"
-                            >
-                              <Phone className="w-4 h-4" />
-                            </a>
-                            <a 
-                              href={`mailto:${matchedProp?.provider?.email || 'seller@gmail.com'}`} 
-                              title="Email Seller"
-                              className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-500 transition-colors shadow-sm"
-                            >
-                              <Mail className="w-4 h-4" />
-                            </a>
-                          </div>
-                        ) : isDeclined ? (
-                          <span className="bg-rose-100 text-rose-700 text-[10px] font-bold px-2.5 py-1 rounded-full border border-rose-200 shrink-0">
-                            Declined
-                          </span>
-                        ) : (
-                          <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 border border-amber-200 shrink-0">
-                            <Clock className="w-3 h-3 text-amber-600 animate-spin" /> Pending Approval
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <Calendar className="w-12 h-12 text-gray-800 mb-4" />
-                  <h3 className="text-gray-900 font-semibold text-lg mb-1">No upcoming visits</h3>
-                  <p className="text-gray-500 text-sm">Schedule a site visit to view properties.</p>
-                </div>
-              )}
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-xl font-black text-gray-900">My Site Visits & Land Transfers</h1>
+                <p className="text-xs text-gray-500">
+                  Track visits. Once accepted by the owner, contact them directly and request land transfer with a single click.
+                </p>
+              </div>
+              <button 
+                onClick={loadVisits}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 transition"
+                title="Refresh Visits"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
             </div>
+
+            {visitsLoading ? (
+              <div className="flex flex-col gap-4">
+                {[0, 1, 2, 3].map(i => <VisitSkeletonCard key={i} />)}
+              </div>
+            ) : visits.length > 0 ? (
+              <div className="flex flex-col gap-4">
+                {visits.map(v => {
+                  const isApproved = v.status === 'CONFIRMED';
+                  const isDeclined = v.status === 'CANCELLED' || v.status === 'REJECTED';
+
+                  // Parse visit date safely without timezone shift
+                  const dateParts = (v.visitDate || '').split('-');
+                  const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                  let displayMonth = 'VISIT';
+                  let displayDay: string | number = '--';
+                  if (dateParts.length === 3) {
+                    const mIdx = parseInt(dateParts[1], 10) - 1;
+                    displayMonth = monthNames[mIdx] || 'VISIT';
+                    displayDay = parseInt(dateParts[2], 10) || '--';
+                  } else if (v.visitDate) {
+                    const d = new Date(v.visitDate);
+                    if (!isNaN(d.getTime())) {
+                      displayMonth = d.toLocaleString('default', { month: 'short' }).toUpperCase();
+                      displayDay = d.getDate();
+                    }
+                  }
+
+                  const matchedProp = v.property?.title ? v.property : properties.find(p => p.id === (v as any).propertyId || p.id === v.property?.id) || v.property;
+                  const propTitle = matchedProp?.title || (v as any).propertyTitle || 'Land Parcel';
+                  const ownerName = matchedProp?.provider ? `${matchedProp.provider.firstName || ''} ${matchedProp.provider.lastName || ''}`.trim() : (matchedProp?.registeredOwner || 'Registered Landowner');
+                  const ownerPhone = matchedProp?.provider?.phoneNumber || matchedProp?.ownerPhone || '+91 94401 88291';
+                  const ownerEmail = matchedProp?.provider?.email || matchedProp?.ownerEmail || 'landlens@acheva.in';
+
+                  // Find if transfer exists for this property
+                  const existingTransfer = transfers.find(t => t.propertyId === matchedProp?.id);
+                  const feedback = matchedProp?.id ? transferFeedback[matchedProp.id] : null;
+
+                  return (
+                    <div 
+                      key={v.id} 
+                      className={`shadow-sm border rounded-3xl p-5 flex flex-col gap-4 transition-all ${
+                        isApproved ? 'bg-white border-emerald-300 ring-1 ring-emerald-200' : isDeclined ? 'bg-rose-50/40 border-rose-200' : 'bg-white border-gray-200'
+                      }`}
+                    >
+                      {/* Top Header Row */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-13 h-13 rounded-2xl bg-blue-50 border border-blue-100 flex flex-col items-center justify-center shrink-0">
+                            <span className="text-[10px] text-blue-600 font-bold uppercase">{displayMonth}</span>
+                            <span className="text-base text-gray-900 font-extrabold">{displayDay}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
+                              {matchedProp?.surveyNumber ? `Survey No: ${matchedProp.surveyNumber}` : 'Government Parcel'}
+                            </span>
+                            <h3 className="text-base font-extrabold text-gray-900">{propTitle}</h3>
+                            <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
+                              <Clock className="w-3.5 h-3.5 text-gray-400"/> {v.visitTime || '10:00 AM'}
+                              {matchedProp?.area && <span>• {matchedProp.area} Acres</span>}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div>
+                          {isApproved ? (
+                            <span className="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Visit Confirmed
+                            </span>
+                          ) : isDeclined ? (
+                            <span className="bg-rose-100 text-rose-700 text-[11px] font-bold px-3 py-1 rounded-full border border-rose-200">
+                              Declined
+                            </span>
+                          ) : (
+                            <span className="bg-amber-100 text-amber-800 text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1 border border-amber-200 animate-pulse">
+                              <Clock className="w-3.5 h-3.5 text-amber-600 animate-spin" /> Pending Approval
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* If Visit Pending: Quick simulation button for demo */}
+                      {!isApproved && !isDeclined && (
+                        <div className="flex items-center justify-between p-3 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
+                          <span>Awaiting landowner confirmation for site inspection.</span>
+                          <button
+                            onClick={() => handleSimulateAcceptVisit(v.id)}
+                            className="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-xs transition"
+                          >
+                            Simulate Owner Accepts Visit
+                          </button>
+                        </div>
+                      )}
+
+                      {/* ── ONCE ACCEPTED: UNLOCK DIRECT CONTACT & REQUEST LAND TRANSFER ── */}
+                      {isApproved && (
+                        <div className="pt-2 space-y-3 border-t border-gray-100">
+                          {/* 1. Contact Actual Landowner Section */}
+                          <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-1.5 text-emerald-800 text-xs font-bold">
+                                <User className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Actual Registered Landowner</span>
+                              </div>
+                              <p className="text-sm font-extrabold text-gray-900">{ownerName}</p>
+                              <p className="text-[11px] text-gray-600">{ownerEmail} • {ownerPhone}</p>
+                            </div>
+
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                              <a
+                                href={`tel:${ownerPhone}`}
+                                className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition"
+                              >
+                                <Phone className="w-3.5 h-3.5" />
+                                <span>Call Owner</span>
+                              </a>
+                              <a
+                                href={`mailto:${ownerEmail}`}
+                                className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition"
+                              >
+                                <Mail className="w-3.5 h-3.5" />
+                                <span>Email Owner</span>
+                              </a>
+                            </div>
+                          </div>
+
+                          {/* 2. Single Button Land Transfer Request */}
+                          <div>
+                            {existingTransfer?.status === 'APPROVED' || existingTransfer?.status === 'COMPLETED' ? (
+                              <div className="p-4 rounded-2xl bg-emerald-100 border border-emerald-300 text-emerald-900 space-y-1">
+                                <div className="flex items-center gap-2 font-black text-xs text-emerald-800">
+                                  <CheckCircle className="w-4 h-4 text-emerald-600" />
+                                  <span>Land Ownership Transferred & Approved!</span>
+                                </div>
+                                <p className="text-xs text-emerald-800 leading-relaxed">
+                                  The registered landowner approved the transfer via Hostinger email. Title rights for {matchedProp?.surveyNumber || 'this parcel'} have been officially conveyed to your citizen account.
+                                </p>
+                              </div>
+                            ) : existingTransfer?.status === 'REJECTED' ? (
+                              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 space-y-1">
+                                <div className="flex items-center gap-2 font-black text-xs text-rose-700">
+                                  <XCircle className="w-4 h-4 text-rose-600" />
+                                  <span>Land Transfer Rejected by Owner</span>
+                                </div>
+                                <p className="text-xs text-rose-800">
+                                  The registered owner clicked Reject. No ownership conveyance was performed.
+                                </p>
+                              </div>
+                            ) : existingTransfer?.status === 'PENDING' ? (
+                              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2 font-black text-xs text-amber-800">
+                                    <RefreshCw className="w-3.5 h-3.5 text-amber-600 animate-spin" />
+                                    <span>Transfer Pending • Awaiting Owner Email Approval</span>
+                                  </div>
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                                    Hostinger SMTP Sent
+                                  </span>
+                                </div>
+                                <p className="text-xs text-amber-800 leading-relaxed">
+                                  Confirmation email has been dispatched to <strong>{existingTransfer.ownerEmail || ownerEmail}</strong>. Once the owner clicks <strong>Accept</strong> in their email, title transfer will be completed automatically!
+                                </p>
+                              </div>
+                            ) : (
+                              <div>
+                                <button
+                                  onClick={() => handleRequestLandTransferFromVisit(matchedProp)}
+                                  disabled={transferRequestingId === matchedProp?.id}
+                                  className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 active:scale-98 transition cursor-pointer"
+                                >
+                                  {transferRequestingId === matchedProp?.id ? (
+                                    <>
+                                      <RefreshCw className="w-4 h-4 animate-spin" />
+                                      <span>Dispatching Hostinger Email to Landowner...</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ShieldCheck className="w-4 h-4" />
+                                      <span>Request Land Transfer (Send Confirmation Email to Owner)</span>
+                                    </>
+                                  )}
+                                </button>
+                                <p className="text-[11px] text-gray-500 text-center mt-1.5">
+                                  Single click sends official email via Hostinger SMTP to <strong>{ownerEmail}</strong> with clickable Accept & Reject buttons.
+                                </p>
+                              </div>
+                            )}
+
+                            {feedback && (
+                              <div className={`mt-2 p-3 rounded-xl text-xs font-semibold ${
+                                feedback.type === 'success' ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : 'bg-rose-50 border border-rose-200 text-rose-800'
+                              }`}>
+                                {feedback.text}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-3xl border border-gray-200 p-6">
+                <Calendar className="w-12 h-12 text-gray-300 mb-3" />
+                <h3 className="text-gray-900 font-bold text-base mb-1">No site visits scheduled yet</h3>
+                <p className="text-gray-500 text-xs max-w-sm mb-4">
+                  Browse verified lands in Explore or the Registry, then click Schedule Visit to inspect the property and request title transfer.
+                </p>
+                <button
+                  onClick={() => setViewTab('verify')}
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+                >
+                  <FileCheck className="w-4 h-4" />
+                  <span>Browse Properties & Schedule Visit</span>
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* ── SETTINGS TAB ── */}
           <div className={viewTab === 'settings' ? 'block p-4' : 'hidden'}>
@@ -1259,7 +1473,11 @@ export const BuyerDashboard = () => {
 
           {/* ── DOCUMENT & OWNER VERIFICATION TAB ── */}
           <div className={viewTab === 'verify' ? 'block pb-8' : 'hidden'}>
-            <DocumentVerificationHub onBack={() => setViewTab('home')} />
+            <DocumentVerificationHub 
+              onBack={() => setViewTab('home')} 
+              onScheduleVisit={(prop) => setSchedulingProperty(prop)}
+              onNavigateToVisits={() => setViewTab('schedule')}
+            />
           </div>
 
           {/* ── SELL / LIST LANDS TAB ── */}
