@@ -346,8 +346,8 @@ export const BuyerDashboard = () => {
   const mainContentRef = useRef<HTMLDivElement>(null);
   const [heroSlideIndex, setHeroSlideIndex] = useState(0);
   const [isNavVisible, setIsNavVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isRightSidebarMenuOpen, setIsRightSidebarMenuOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
@@ -802,57 +802,30 @@ export const BuyerDashboard = () => {
             </button>
           </div>
 
+          {/* Notification Button */}
           <div className="relative">
-            <button onClick={() => setIsNotificationSidebarOpen(true)} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200 hover:bg-gray-200">
+            <button 
+              onClick={() => setIsNotificationSidebarOpen(true)} 
+              className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200 hover:bg-gray-200 transition-colors"
+              title="Notifications"
+            >
               <Bell className="w-4 h-4 text-gray-600" />
             </button>
             {unreadCount > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-danger-500 border-2 border-white rounded-full" />}
           </div>
           
-          <div className="relative">
-            <button 
-              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-              className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200 hover:bg-gray-200 shadow-sm"
-            >
-              <User className="w-4 h-4 text-gray-600" />
-            </button>
-            
-            <AnimatePresence>
-              {isProfileMenuOpen && (
-                <>
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-40 bg-black/20" 
-                    onClick={() => setIsProfileMenuOpen(false)} 
-                  />
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 top-12 w-48 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden z-50"
-                  >
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">Signed in as</p>
-                      <p className="text-gray-900 text-sm font-semibold truncate">{currentUser?.firstName || 'Explorer'}</p>
-                    </div>
-                    <div className="py-2">
-                      <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                        <User className="w-4 h-4 text-gray-400" /> Profile
-                      </button>
-                      <button 
-                        onClick={() => { authService.logout(); navigate('/login'); }}
-                        className="w-full px-4 py-2 text-left text-sm text-danger-500 hover:bg-danger-500/10 flex items-center gap-2"
-                      >
-                        <LogOut className="w-4 h-4" /> Log out
-                      </button>
-                    </div>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
-          </div>
+          {/* ── SIDEBAR MENU TRIGGER IN APP BAR RIGHT CORNER ── */}
+          <button 
+            onClick={() => setIsRightSidebarMenuOpen(true)}
+            className="flex items-center gap-2 pl-2 pr-3.5 py-1.5 rounded-full bg-slate-900 text-white hover:bg-slate-800 shadow-sm border border-slate-700 transition-all active:scale-95"
+            title="Open Sidebar Menu"
+          >
+            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center text-[11px] font-bold shadow-xs">
+              {currentUser?.firstName?.charAt(0) || 'C'}
+            </div>
+            <span className="text-xs font-semibold hidden sm:inline">Menu</span>
+            <Menu className="w-4 h-4 text-slate-300" />
+          </button>
         </div>
       </div>
 
@@ -1365,6 +1338,226 @@ export const BuyerDashboard = () => {
             </motion.div>
           </>
         )}
+        {/* ── APP BAR RIGHT CORNER SIDEBAR MENU ── */}
+        {isRightSidebarMenuOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[120]" 
+              onClick={() => setIsRightSidebarMenuOpen(false)} 
+            />
+            
+            <motion.div 
+              initial={{ x: '100%' }} 
+              animate={{ x: 0 }} 
+              exit={{ x: '100%' }} 
+              transition={{ type: 'spring', damping: 26, stiffness: 220 }} 
+              className="fixed top-0 right-0 bottom-0 w-84 sm:w-96 bg-white border-l border-gray-200 z-[130] flex flex-col shadow-2xl overflow-hidden"
+            >
+              {/* Header / Citizen Identity */}
+              <div className="p-5 bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 text-white relative">
+                <button 
+                  onClick={() => setIsRightSidebarMenuOpen(false)} 
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                  aria-label="Close menu"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                
+                <div className="flex items-center gap-3.5 mt-1">
+                  <div className="relative">
+                    <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-blue-500 to-cyan-400 p-0.5 shadow-lg">
+                      <div className="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center text-lg font-bold text-white">
+                        {currentUser?.firstName?.charAt(0) || 'C'}
+                      </div>
+                    </div>
+                    <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-slate-900 rounded-full" />
+                  </div>
+                  <div className="flex-1 min-w-0 pr-6">
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="text-base font-bold text-white truncate">
+                        {currentUser?.firstName || 'Citizen'} {currentUser?.lastName || ''}
+                      </h3>
+                      <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                    </div>
+                    <p className="text-xs text-slate-300 truncate">{currentUser?.email || 'citizen@landlens.gov'}</p>
+                    <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      Unified Citizen • Buy & Sell
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Navigation Items (All remaining items moved to sidebar menu) */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {/* Government & Legal Land Services */}
+                <div>
+                  <p className="px-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                    Land Services & Legal Deeds
+                  </p>
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => { setViewTab('transfers'); setIsRightSidebarMenuOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${viewTab === 'transfers' ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200' : 'hover:bg-gray-100 text-gray-700'}`}
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                        <ShieldCheck className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold">Land Transfers & Deeds</span>
+                          <span className="text-[9px] bg-emerald-100 text-emerald-700 font-bold px-1.5 py-0.5 rounded">Hostinger SMTP</span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 truncate">Email confirmation & title conveyance</p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => { setViewTab('verify'); setIsRightSidebarMenuOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${viewTab === 'verify' ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200' : 'hover:bg-gray-100 text-gray-700'}`}
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                        <FileCheck className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-semibold block">Document & Survey Verification</span>
+                        <p className="text-[11px] text-gray-500 truncate">Verify land deeds & survey numbers</p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => { setViewTab('sell'); setIsRightSidebarMenuOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${viewTab === 'sell' ? 'bg-emerald-50 text-emerald-700 font-bold border border-emerald-200' : 'hover:bg-gray-100 text-gray-700'}`}
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                        <Plus className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-semibold block">Cell Land (Seller Hub)</span>
+                        <p className="text-[11px] text-gray-500 truncate">List your plots & AI valuation</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Personal & Activity */}
+                <div>
+                  <p className="px-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                    My Activity & Saved
+                  </p>
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => { setViewTab('wishlist'); setIsRightSidebarMenuOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${viewTab === 'wishlist' ? 'bg-rose-50 text-rose-700 font-bold border border-rose-200' : 'hover:bg-gray-100 text-gray-700'}`}
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                        <Heart className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold">Saved Land Parcels</span>
+                          {bookmarkIds.size > 0 && (
+                            <span className="text-[10px] bg-rose-100 text-rose-700 font-bold px-1.5 py-0.2 rounded-full">
+                              {bookmarkIds.size}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-gray-500 truncate">Bookmarked plots & favorites</p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => { setViewTab('schedule'); setIsRightSidebarMenuOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${viewTab === 'schedule' ? 'bg-amber-50 text-amber-700 font-bold border border-amber-200' : 'hover:bg-gray-100 text-gray-700'}`}
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                        <Calendar className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold">Scheduled Site Visits</span>
+                          {visits.length > 0 && (
+                            <span className="text-[10px] bg-amber-100 text-amber-700 font-bold px-1.5 py-0.2 rounded-full">
+                              {visits.length}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-gray-500 truncate">Upcoming visits & field inspections</p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => { setViewTab('settings'); setIsRightSidebarMenuOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${viewTab === 'settings' ? 'bg-purple-50 text-purple-700 font-bold border border-purple-200' : 'hover:bg-gray-100 text-gray-700'}`}
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                        <User className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-semibold block">Citizen Profile & Settings</span>
+                        <p className="text-[11px] text-gray-500 truncate">KYC details, phone & preferences</p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => { setIsNotificationSidebarOpen(true); setIsRightSidebarMenuOpen(false); }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-gray-100 text-gray-700 transition-all"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center shrink-0">
+                        <Bell className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold">Notifications</span>
+                          {unreadCount > 0 && (
+                            <span className="text-[10px] bg-red-100 text-red-600 font-bold px-1.5 py-0.2 rounded-full">
+                              {unreadCount} new
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-gray-500 truncate">Deed approvals & verification alerts</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* System Infrastructure Info */}
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 text-[11px] text-gray-500 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      Hostinger MySQL 8.0
+                    </span>
+                    <span className="text-[10px] text-emerald-600 font-bold">Connected</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <span className="w-2 h-2 rounded-full bg-blue-500" />
+                      Hostinger SMTP
+                    </span>
+                    <span className="text-[10px] text-blue-600 font-semibold">landlens@acheva.in</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Sign Out */}
+              <div className="p-4 border-t border-gray-200 bg-gray-50">
+                <button
+                  onClick={() => {
+                    authService.logout();
+                    navigate('/login');
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-98"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out of Account
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
       </AnimatePresence>
 
       {/* ── IBM AI CITIZEN ASSISTANT MODAL (MULTILINGUAL) ── */}
@@ -1513,12 +1706,9 @@ export const BuyerDashboard = () => {
           {[
             { id: 'home', icon: Home, label: 'Home' },
             { id: 'explore', icon: Compass, label: 'Explore' },
-            { id: 'sell', icon: Plus, label: 'Sell Land' },
-            { id: 'transfers', icon: ShieldCheck, label: 'Transfers' },
+            { id: 'sell', icon: Plus, label: 'Cell' },
             { id: 'map', icon: MapIcon, label: 'Map' },
-            { id: 'schedule', icon: Calendar, label: 'Visits' },
-            { id: 'verify', icon: FileCheck, label: 'Verify' },
-            { id: 'settings', icon: User, label: 'Profile' }
+            { id: 'schedule', icon: Calendar, label: 'Visits' }
           ].map(item => {
              const Icon = item.icon;
              const isActive = viewTab === item.id;
