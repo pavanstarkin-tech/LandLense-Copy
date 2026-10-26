@@ -13,7 +13,13 @@ class Mailer {
     private static $fromEmail = 'landlens@acheva.in';
     private static $fromName = 'LandLens Government Land Registry';
 
-    public static function send($toEmail, $toName, $subject, $htmlBody) {
+    public static function send($toEmail, $toName = '', $subject = '', $htmlBody = '') {
+        // If 3 arguments passed: ($toEmail, $subject, $htmlBody)
+        if (func_num_args() === 3) {
+            $htmlBody = $subject;
+            $subject = $toName;
+            $toName = '';
+        }
         $toEmail = trim($toEmail);
         if (empty($toEmail) || !filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
             return ['success' => false, 'message' => "Invalid recipient email: $toEmail"];
