@@ -93,8 +93,7 @@ export const Register = () => {
             <div>
               <label className="block text-slate-300 text-sm font-medium mb-1.5" htmlFor="role">Register As</label>
               <select id="role" name="role" value={formData.role} onChange={handleChange} className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl py-3 px-4 text-white focus:outline-hidden focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm appearance-none">
-                <option value="BUYER">Buyer (Explore Lands)</option>
-                <option value="PROVIDER">Provider (Sell/List Lands)</option>
+                <option value="BUYER">Citizen / Landowner (Buy, Sell & Transfer Lands)</option>
                 <option value="GOVERNMENT_OFFICER">Government Officer (Inspector)</option>
                 <option value="ADMIN">Admin (System Administrator)</option>
               </select>

@@ -39,12 +39,12 @@ const roleConfig: Record<RoleType, { label: string; color: string; badge: string
     badge: 'bg-blue-50 border-blue-200 text-blue-700',
   },
   PROVIDER: {
-    label: 'Provider Portal',
+    label: 'Citizen Portal (Seller)',
     color: 'text-accent-400',
     badge: 'bg-accent-500/15 border-accent-500/30 text-accent-400',
   },
   BUYER: {
-    label: 'Buyer Portal',
+    label: 'Citizen Portal (Buy & Sell)',
     color: 'text-cyan-400',
     badge: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-400',
   },

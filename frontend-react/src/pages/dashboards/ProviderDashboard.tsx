@@ -13,6 +13,7 @@ import { Button } from '../../components/ui/Button';
 import { StatusBadge, Chip } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { CircularProgress } from '../../components/ui/ProgressBar';
+import { LandTransferHub } from '../../components/shared/LandTransferHub';
 import type {
   Property, PropertyVisit, Notification, PropertyImage, PropertyVideo, PropertyDocument,
   VerificationTimeline, AiVerification, GovernmentVerification, DocumentType
@@ -103,7 +104,7 @@ const getFallbackPhoto = (p: Property) => {
 
 export const ProviderDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'listings' | 'add' | 'visits'>('listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'add' | 'visits' | 'transfers'>('listings');
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const [detailSubTab, setDetailSubTab] = useState<'verify' | 'media' | 'docs' | 'timeline'>('verify');
   const [listingFilterTab, setListingFilterTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
@@ -429,6 +430,7 @@ export const ProviderDashboard = () => {
           {[
             { id: 'listings', icon: Home, label: 'My Listings' },
             { id: 'add', icon: Plus, label: 'Add Property' },
+            { id: 'transfers', icon: Shield, label: 'Land Transfers' },
             { id: 'visits', icon: Calendar, label: 'Visits & Tours', badge: pendingVisitsCount }
           ].map(item => {
             const Icon = item.icon;
@@ -451,6 +453,16 @@ export const ProviderDashboard = () => {
               </button>
             );
           })}
+          
+          <div className="pt-3 border-t border-gray-100">
+            <button
+              onClick={() => navigate('/buyer')}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all text-left bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
+            >
+              <Eye className="w-4 h-4 text-blue-600 shrink-0" />
+              <span className="flex-1">Explore & Buy Lands</span>
+            </button>
+          </div>
         </nav>
 
         <div className="pt-3 border-t border-gray-200">
@@ -1082,6 +1094,11 @@ export const ProviderDashboard = () => {
           )}
         </div>
 
+        {/* ─── LAND TRANSFERS TAB ─── */}
+        <div className={`${activeTab === 'transfers' ? 'block' : 'hidden'} space-y-5`}>
+          <LandTransferHub onBack={() => setActiveTab('listings')} />
+        </div>
+
       {/* Notifications handled via right-side panel now, not a tab */}
       </div>
 
@@ -1221,6 +1238,7 @@ export const ProviderDashboard = () => {
           {[
             { id: 'listings', icon: Home, label: 'Listings' },
             { id: 'add', icon: Plus, label: 'Add' },
+            { id: 'transfers', icon: Shield, label: 'Transfers' },
             { id: 'visits', icon: Calendar, label: 'Visits', badge: pendingVisitsCount }
           ].map(item => {
              const Icon = item.icon;

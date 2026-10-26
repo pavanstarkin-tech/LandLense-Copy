@@ -34,8 +34,6 @@ export const Login = () => {
           navigate('/officer');
           break;
         case 'PROVIDER':
-          navigate('/provider');
-          break;
         case 'BUYER':
         default:
           navigate('/buyer');

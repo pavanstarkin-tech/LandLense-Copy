@@ -69,12 +69,9 @@ function App() {
           <Route path="/auth/forgot-password" element={<ForgotPassword />} />
         </Route>
 
-        {/* Protected Routes by Role */}
-        <Route element={<ProtectedRoute allowedRoles={['BUYER']} />}>
+        {/* Protected Routes by Role - Unified Citizen (Buy & Sell Lands) */}
+        <Route element={<ProtectedRoute allowedRoles={['BUYER', 'PROVIDER']} />}>
           <Route path="/buyer" element={<BuyerDashboard />} />
-        </Route>
-
-        <Route element={<ProtectedRoute allowedRoles={['PROVIDER']} />}>
           <Route path="/provider" element={<ProviderDashboard />} />
         </Route>
 

@@ -11,10 +11,11 @@ PORT = 65002
 USER = "u833088220"
 PASS = "Sanvith@27"
 REMOTE_PATH = "/home/u833088220/domains/landlense.acheva.in/public_html"
-LOCAL_DIST = r"c:\Users\shese\Desktop\LandLense - Copy\frontend-react\dist"
-LOCAL_PHP = r"c:\Users\shese\Desktop\LandLense - Copy\php_backend"
-PACKAGE_DIR = r"c:\Users\shese\Desktop\LandLense - Copy\deploy_package"
-ZIP_FILE = r"c:\Users\shese\Desktop\LandLense - Copy\landlens_deploy.zip"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LOCAL_DIST = os.path.join(BASE_DIR, "frontend-react", "dist")
+LOCAL_PHP = os.path.join(BASE_DIR, "php_backend")
+PACKAGE_DIR = os.path.join(BASE_DIR, "deploy_package")
+ZIP_FILE = os.path.join(BASE_DIR, "landlens_deploy.zip")
 
 print("[1/5] Preparing deployment directory...")
 if os.path.exists(PACKAGE_DIR):

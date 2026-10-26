@@ -12,6 +12,7 @@ require_once __DIR__ . '/helpers/AuthHelper.php';
 require_once __DIR__ . '/controllers/AuthController.php';
 require_once __DIR__ . '/controllers/PropertyController.php';
 require_once __DIR__ . '/controllers/VerificationController.php';
+require_once __DIR__ . '/controllers/TransferController.php';
 require_once __DIR__ . '/controllers/AiController.php';
 require_once __DIR__ . '/controllers/AnalyticsController.php';
 require_once __DIR__ . '/controllers/NotificationController.php';
@@ -114,6 +115,25 @@ if ($path === '/api/properties' && $method === 'POST') {
 
 if (preg_match('#^/api/properties/([^/]+)$#', $path, $matches) && $method === 'GET') {
     PropertyController::getPropertyById($matches[1]);
+}
+
+// =========================================================================
+// 3.5. LAND SELLING & TITLE TRANSFER ENDPOINTS (WITH HOSTINGER EMAIL CONFIRMATION)
+// =========================================================================
+if ($path === '/api/transfers/request' && $method === 'POST') {
+    TransferController::createRequest();
+}
+
+if ($path === '/api/transfers/respond') {
+    TransferController::handleResponse();
+}
+
+if ($path === '/api/transfers' && $method === 'GET') {
+    TransferController::listTransfers();
+}
+
+if (preg_match('#^/api/transfers/([^/]+)$#', $path, $matches) && $method === 'GET') {
+    TransferController::getTransfer($matches[1]);
 }
 
 // =========================================================================

@@ -281,3 +281,24 @@ export interface OwnerVerificationRequest {
   responseTimestamp?: string;
   sellerBlocked?: boolean;
 }
+
+export interface LandTransfer {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  surveyNumber: string;
+  area: number;
+  location: string;
+  transferAmount: number;
+  currentOwnerId?: string;
+  currentOwnerName?: string;
+  currentOwnerEmail: string;
+  buyerId: string;
+  buyerName?: string;
+  buyerEmail: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  ownerRemarks?: string;
+  requestedAt: string;
+  respondedAt?: string;
+}
+

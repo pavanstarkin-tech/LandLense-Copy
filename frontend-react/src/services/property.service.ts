@@ -368,5 +368,36 @@ export const propertyService = {
   deconflictCoordinates: async (): Promise<string> => {
     const response = await api.post<string>('/api/properties/deconflict-coordinates');
     return response.data;
+  },
+
+  requestLandTransfer: async (data: {
+    propertyId: string;
+    buyerId?: string;
+    buyerName?: string;
+    buyerEmail?: string;
+    ownerEmail?: string;
+    transferAmount?: number;
+    remarks?: string;
+  }): Promise<any> => {
+    const response = await api.post('/api/transfers/request', data);
+    return response.data;
+  },
+
+  getLandTransfers: async (userId?: string): Promise<Models.LandTransfer[]> => {
+    const response = await api.get<Models.LandTransfer[]>('/api/transfers', {
+      params: userId ? { userId } : {}
+    });
+    return Array.isArray(response.data) ? response.data : [];
+  },
+
+  getTransferById: async (id: string): Promise<Models.LandTransfer> => {
+    const response = await api.get<Models.LandTransfer>(`/api/transfers/${id}`);
+    return response.data;
+  },
+
+  respondToLandTransfer: async (token: string, action: 'APPROVE' | 'REJECT', remarks?: string): Promise<any> => {
+    const response = await api.post('/api/transfers/respond', { token, action, remarks });
+    return response.data;
   }
 };
+

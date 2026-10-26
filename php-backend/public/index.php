@@ -33,6 +33,7 @@ use LandLens\Controllers\NotificationController;
 use LandLens\Controllers\DeveloperController;
 use LandLens\Controllers\AnalyticsController;
 use LandLens\Controllers\AiController;
+use LandLens\Controllers\TransferController;
 
 // Handle CORS Preflights
 CorsMiddleware::handle();
@@ -88,6 +89,15 @@ $router->post('/api/properties/{id}/videos', [PropertyController::class, 'upload
 $router->get('/api/properties/{id}/documents', [PropertyController::class, 'getDocuments']);
 $router->post('/api/properties/{id}/documents', [PropertyController::class, 'uploadDocument']);
 $router->post('/api/documents/{id}/ocr', [PropertyController::class, 'processOcr']);
+
+// ==========================================
+// 3.5. Land Selling & Title Transfer (Hostinger Email Confirmation)
+// ==========================================
+$router->post('/api/transfers/request', [TransferController::class, 'createRequest']);
+$router->get('/api/transfers/respond', [TransferController::class, 'handleResponse']);
+$router->post('/api/transfers/respond', [TransferController::class, 'handleResponse']);
+$router->get('/api/transfers', [TransferController::class, 'listTransfers']);
+$router->get('/api/transfers/{id}', [TransferController::class, 'getTransfer']);
 
 // ==========================================
 // 4. Verification & Government Review

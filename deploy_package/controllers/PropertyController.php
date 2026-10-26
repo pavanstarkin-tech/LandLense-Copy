@@ -186,20 +186,30 @@ class PropertyController {
         $conn = Database::getConnection();
         if ($conn) {
             try {
-                $stmt = $conn->query("
-                    SELECT pv.id, pv.visit_date as visitDate, pv.visit_time as visitTime, pv.status, pv.created_at as createdAt,
+                $providerId = $_GET['providerId'] ?? null;
+                $sql = "
+                    SELECT pv.id, pv.property_id as propertyId, pv.visit_date as visitDate, pv.visit_time as visitTime, pv.status, pv.created_at as createdAt,
                            p.id as prop_id, p.title as prop_title, p.price as prop_price, p.area as prop_area, 
-                           p.village as prop_village, p.district as prop_district
+                           p.village as prop_village, p.district as prop_district, p.provider_id as prop_provider_id
                     FROM property_visits pv
                     LEFT JOIN properties p ON pv.property_id = p.id
                     WHERE pv.is_active = 1
-                    ORDER BY pv.visit_date ASC, pv.visit_time ASC
-                ");
+                ";
+                $params = [];
+                if (!empty($providerId)) {
+                    $sql .= " AND p.provider_id = :providerId";
+                    $params[':providerId'] = $providerId;
+                }
+                $sql .= " ORDER BY pv.visit_date ASC, pv.visit_time ASC";
+
+                $stmt = $conn->prepare($sql);
+                $stmt->execute($params);
                 $rows = $stmt->fetchAll();
 
                 $formatted = array_map(function($r) {
                     return [
                         'id' => $r['id'],
+                        'propertyId' => $r['propertyId'],
                         'visitDate' => $r['visitDate'],
                         'visitTime' => $r['visitTime'],
                         'status' => $r['status'] ?: 'SCHEDULED',
@@ -209,12 +219,14 @@ class PropertyController {
                             'price' => (float)$r['prop_price'],
                             'area' => (float)$r['prop_area'],
                             'village' => $r['prop_village'],
-                            'district' => $r['prop_district']
+                            'district' => $r['prop_district'],
+                            'providerId' => $r['prop_provider_id']
                         ]
                     ];
                 }, $rows);
 
                 Response::json($formatted);
+                return;
             } catch (Exception $e) {
                 error_log("[PropertyController::listVisits Error] " . $e->getMessage());
             }

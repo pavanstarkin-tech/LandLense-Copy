@@ -2,10 +2,20 @@ import axios from 'axios';
 import { authService } from './auth.service';
 
 const getApiBaseUrl = (): string => {
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    return '';
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
   }
-  return import.meta.env.VITE_API_BASE_URL || '';
+  if (typeof window !== 'undefined') {
+    // If running on hostinger domain itself, relative path works directly
+    if (window.location.hostname.includes('acheva.in')) {
+      return '';
+    }
+    // If running on GitHub Pages (github.io) or other remote hosts, point to live Hostinger backend
+    if (window.location.hostname.includes('github.io') || (!window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1'))) {
+      return 'https://landlense.acheva.in';
+    }
+  }
+  return '';
 };
 
 const api = axios.create({

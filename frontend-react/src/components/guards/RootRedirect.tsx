@@ -21,8 +21,6 @@ export const RootRedirect = () => {
         navigate('/officer', { replace: true });
         break;
       case 'PROVIDER':
-        navigate('/provider', { replace: true });
-        break;
       case 'BUYER':
       default:
         navigate('/buyer', { replace: true });

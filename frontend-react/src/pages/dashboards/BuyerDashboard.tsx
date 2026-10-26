@@ -15,6 +15,8 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { CircularProgress } from '../../components/ui/ProgressBar';
 import { CitizenAiAssistantModal } from '../../components/shared/CitizenAiAssistantModal';
 import { DocumentVerificationHub } from '../../components/shared/DocumentVerificationHub';
+import { LandTransferHub } from '../../components/shared/LandTransferHub';
+import { LandSellerHub } from '../../components/shared/LandSellerHub';
 import type { Property, PropertyVisit, AiConversation, AiMessage, Notification, PropertyImage, PropertyVideo, PropertyDocument, AiVerification } from '../../models/property.models';
 import {
   Search, Calendar, MessageSquare, Bell, Map as MapIcon,
@@ -289,7 +291,8 @@ const MobilePropertyCard = ({ p, vertical = false, isHidden = false, onScheduleV
 
 export const BuyerDashboard = () => {
   const navigate = useNavigate();
-  const [viewTab, setViewTab] = useState<'home' | 'explore' | 'map' | 'chat' | 'wishlist' | 'schedule' | 'settings' | 'verify'>('home');
+  const [viewTab, setViewTab] = useState<'home' | 'explore' | 'map' | 'sell' | 'transfers' | 'chat' | 'wishlist' | 'schedule' | 'settings' | 'verify'>('home');
+  const [transferPreselectedId, setTransferPreselectedId] = useState<string | undefined>(undefined);
   const [listMode, setListMode] = useState<'list' | 'map'>('list');
 
   const [properties, setProperties] = useState<Property[]>([]);
@@ -764,7 +767,41 @@ export const BuyerDashboard = () => {
           <img src={logoText} alt="LandLense" className="h-6 w-auto object-contain" />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Quick Mode Switchers for Unified Citizen (Buyer + Seller) */}
+          <div className="hidden md:flex items-center gap-1 bg-gray-100 p-1 rounded-full border border-gray-200">
+            <button
+              onClick={() => setViewTab('home')}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                viewTab === 'home' || viewTab === 'explore' || viewTab === 'map'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Explore & Buy
+            </button>
+            <button
+              onClick={() => setViewTab('sell')}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                viewTab === 'sell'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Sell Land
+            </button>
+            <button
+              onClick={() => setViewTab('transfers')}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                viewTab === 'transfers'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Land Transfers
+            </button>
+          </div>
+
           <div className="relative">
             <button onClick={() => setIsNotificationSidebarOpen(true)} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200 hover:bg-gray-200">
               <Bell className="w-4 h-4 text-gray-600" />
@@ -1252,6 +1289,25 @@ export const BuyerDashboard = () => {
             <DocumentVerificationHub onBack={() => setViewTab('home')} />
           </div>
 
+          {/* ── SELL / LIST LANDS TAB ── */}
+          <div className={viewTab === 'sell' ? 'block p-4 pb-28' : 'hidden'}>
+            <LandSellerHub
+              onInitiateTransfer={(propId) => {
+                setTransferPreselectedId(propId);
+                setViewTab('transfers');
+              }}
+              onExploreLands={() => setViewTab('explore')}
+            />
+          </div>
+
+          {/* ── LAND TRANSFERS & HOSTINGER EMAIL CONFIRMATION TAB ── */}
+          <div className={viewTab === 'transfers' ? 'block p-4 pb-28' : 'hidden'}>
+            <LandTransferHub
+              preselectedPropertyId={transferPreselectedId}
+              onBack={() => setViewTab('home')}
+            />
+          </div>
+
         </div>
       </div>
 
@@ -1456,10 +1512,12 @@ export const BuyerDashboard = () => {
         <div className="flex items-center justify-between w-full h-[60px]">
           {[
             { id: 'home', icon: Home, label: 'Home' },
-            { id: 'verify', icon: FileCheck, label: 'Verify' },
             { id: 'explore', icon: Compass, label: 'Explore' },
+            { id: 'sell', icon: Plus, label: 'Sell Land' },
+            { id: 'transfers', icon: ShieldCheck, label: 'Transfers' },
             { id: 'map', icon: MapIcon, label: 'Map' },
             { id: 'schedule', icon: Calendar, label: 'Visits' },
+            { id: 'verify', icon: FileCheck, label: 'Verify' },
             { id: 'settings', icon: User, label: 'Profile' }
           ].map(item => {
              const Icon = item.icon;
